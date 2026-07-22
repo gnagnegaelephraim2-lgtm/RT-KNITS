@@ -76,20 +76,20 @@ pub fn is_safe_input(input: &str) -> bool {
     true
 }
 
-/// Validate a Mauritius phone number: +230 followed by 8 digits.
+/// Validate a phone number: accepts Mauritius (+230 or local) and general E.164 international formats.
 #[wasm_bindgen]
 pub fn validate_phone(phone: &str) -> bool {
     let stripped: String = phone.chars().filter(|c| c.is_ascii_digit() || *c == '+').collect();
 
-    // Accept formats: +230XXXXXXXX, 230XXXXXXXX, 0XXXXXXXX
-    if let Some(rest) = stripped.strip_prefix("+230") {
-        return rest.len() == 8 && rest.chars().all(|c| c.is_ascii_digit());
+    // General international E.164: starts with '+' and has 7 to 15 digits
+    if stripped.starts_with('+') {
+        let rest = &stripped[1..];
+        return rest.len() >= 7 && rest.len() <= 15 && rest.chars().all(|c| c.is_ascii_digit());
     }
-    if let Some(rest) = stripped.strip_prefix("230") {
-        return rest.len() == 8 && rest.chars().all(|c| c.is_ascii_digit());
-    }
-    if stripped.len() == 8 && stripped.starts_with('0') {
-        return stripped.chars().all(|c| c.is_ascii_digit());
+
+    // Accept formats: 230XXXXXXXX, 0XXXXXXXX or generic digit-only numbers between 8 to 15 digits
+    if stripped.chars().all(|c| c.is_ascii_digit()) {
+        return stripped.len() >= 8 && stripped.len() <= 15;
     }
 
     false

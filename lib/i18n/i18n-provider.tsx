@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useMemo } from "react"
+import { createContext, useCallback, useContext, useEffect, useState, useMemo } from "react"
 import { useAuth } from "@/components/auth/auth-provider"
 import { DEFAULT_LOCALE, DICTIONARIES, type Locale } from "./dictionaries"
 
@@ -9,6 +9,7 @@ type Vars = Record<string, string | number>
 interface I18nContextValue {
   locale: Locale
   t: (key: string, vars?: Vars) => string
+  setLocale: (locale: Locale) => void
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null)
@@ -23,8 +24,35 @@ function isSupportedLocale(value: string | null | undefined): value is Locale {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
-  const locale: Locale = isSupportedLocale(user?.preferred_language) ? user.preferred_language : DEFAULT_LOCALE
+  const { user, updateUser } = useAuth()
+  const [guestLocale, setGuestLocale] = useState<Locale>(DEFAULT_LOCALE)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem("nita_guest_locale")
+      if (isSupportedLocale(stored)) {
+        setGuestLocale(stored)
+      }
+    }
+  }, [])
+
+  const locale = useMemo(() => {
+    if (user?.preferred_language && isSupportedLocale(user.preferred_language)) {
+      return user.preferred_language
+    }
+    return guestLocale
+  }, [user?.preferred_language, guestLocale])
+
+  const setLocale = useCallback((newLocale: Locale) => {
+    if (user) {
+      updateUser({ preferred_language: newLocale })
+    } else {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("nita_guest_locale", newLocale)
+      }
+      setGuestLocale(newLocale)
+    }
+  }, [user, updateUser])
 
   const t = useMemo(() => {
     return (key: string, vars?: Vars) => {
@@ -36,7 +64,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     }
   }, [locale])
 
-  const value = useMemo(() => ({ locale, t }), [locale, t])
+  const value = useMemo(() => ({ locale, t, setLocale }), [locale, t, setLocale])
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }
@@ -50,3 +78,4 @@ export function useI18n() {
 export function useT() {
   return useI18n().t
 }
+

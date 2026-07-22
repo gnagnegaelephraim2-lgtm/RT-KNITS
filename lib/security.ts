@@ -33,9 +33,27 @@ export async function isSafe(input: string): Promise<boolean> {
 // --- Phone validation ---
 
 export async function validatePhone(phone: string): Promise<boolean> {
-  const m = await loadWasm()
-  return m.validate_phone(phone)
+  const stripped = phone.replace(/[^\d+]/g, "")
+  
+  // Accept standard E.164 format: + followed by 7 to 15 digits
+  if (stripped.startsWith("+")) {
+    const digits = stripped.slice(1)
+    return digits.length >= 7 && digits.length <= 15 && /^\d+$/.test(digits)
+  }
+  
+  // Also support local/national format or missing + (8 to 15 digits)
+  if (/^\d+$/.test(stripped)) {
+    return stripped.length >= 8 && stripped.length <= 15
+  }
+
+  try {
+    const m = await loadWasm()
+    return m.validate_phone(phone)
+  } catch {
+    return false
+  }
 }
+
 
 // --- PIN hashing ---
 
