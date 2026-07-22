@@ -1,6 +1,7 @@
 import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import { ThemeProvider } from "next-themes"
 import { AuthProvider } from "@/components/auth/auth-provider"
 import { I18nProvider } from "@/lib/i18n/i18n-provider"
 import { Toaster } from "@/components/ui/sonner"
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: "light",
+  colorScheme: "light dark",
   themeColor: "#1e293b",
 }
 
@@ -28,15 +29,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`light bg-background ${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased font-sans">
-        <AuthProvider>
-          <I18nProvider>
-            <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
-          </I18nProvider>
-        </AuthProvider>
-        <Toaster position="top-right" />
-        {process.env.NODE_ENV === "production" && <Analytics />}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            <I18nProvider>
+              <TooltipProvider delay={200}>{children}</TooltipProvider>
+            </I18nProvider>
+          </AuthProvider>
+          <Toaster position="top-right" />
+          {process.env.NODE_ENV === "production" && <Analytics />}
+        </ThemeProvider>
       </body>
     </html>
   )

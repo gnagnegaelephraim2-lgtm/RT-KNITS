@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 import {
   LayoutDashboard,
   Inbox,
@@ -15,6 +17,13 @@ import {
   MessagesSquare,
   BarChart3,
   CalendarClock,
+  Smartphone,
+  Code2,
+  Database,
+  BookOpen,
+  Sun,
+  Moon,
+  Monitor,
   LogOut,
   Menu,
 } from "lucide-react"
@@ -59,6 +68,10 @@ const NAV = [
   { href: "/admin/conversations", labelKey: "nav.admin.conversations", icon: MessagesSquare },
   { href: "/admin/analytics", labelKey: "nav.admin.analytics", icon: BarChart3 },
   { href: "/admin/preventive", labelKey: "nav.admin.preventive", icon: CalendarClock },
+  { href: "/admin/simulator", labelKey: "nav.admin.simulator", icon: Smartphone },
+  { href: "/admin/api-sandbox", labelKey: "nav.admin.apiSandbox", icon: Code2 },
+  { href: "/admin/data-model", labelKey: "nav.admin.dataModel", icon: Database },
+  { href: "/admin/docs", labelKey: "nav.admin.docs", icon: BookOpen },
 ]
 
 function useApprovalNotifications() {
@@ -67,6 +80,37 @@ function useApprovalNotifications() {
     "admin:notifications:approvals",
     fetchPendingApprovals,
     (n) => t("admin.notifications.approvalCount", { count: n }),
+  )
+}
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  if (!mounted) return null
+
+  const cycle = () => {
+    if (theme === "light") setTheme("dark")
+    else if (theme === "dark") setTheme("system")
+    else setTheme("light")
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={cycle}
+      className="h-8 w-8 rounded-md border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent"
+      title={`Theme: ${theme}`}
+    >
+      {theme === "light" ? (
+        <Sun className="h-3.5 w-3.5" />
+      ) : theme === "dark" ? (
+        <Moon className="h-3.5 w-3.5" />
+      ) : (
+        <Monitor className="h-3.5 w-3.5" />
+      )}
+    </Button>
   )
 }
 
@@ -122,15 +166,18 @@ function SidebarInner({ onNavigate }: { onNavigate?: () => void }) {
           </div>
           <RoleBadge role={user?.role} />
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={logout}
-          className="w-full gap-1.5 rounded-md border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          {t("common.logOut")}
-        </Button>
+        <div className="flex gap-2">
+          <ThemeToggle />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={logout}
+            className="flex-1 gap-1.5 rounded-md border-sidebar-border bg-transparent text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            {t("common.logOut")}
+          </Button>
+        </div>
       </div>
     </div>
   )
